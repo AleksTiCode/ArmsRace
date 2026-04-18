@@ -4,7 +4,7 @@ import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.item.Items
 
-class LobbyInstance(val id: Int, val template: LobbyTemplate) {
+class LobbyInstance( val template: LobbyTemplate) {
     val players = mutableListOf<ServerPlayer>()
     var state = GameState.WAITING
 
@@ -15,6 +15,7 @@ class LobbyInstance(val id: Int, val template: LobbyTemplate) {
 
                 for ((index, player) in players.withIndex()) {
                     val spawn = template.spawns.getOrNull(index) ?: return "Недостаточно точек спавна"
+                    LobbyManager.inventories[player.uuid] = player.inventory
                     player.teleportTo(spawn.x, spawn.y, spawn.z)
                     player.inventory.clearContent()
                     player.inventory.setItem(0, ItemStack(Items.WOODEN_SWORD))

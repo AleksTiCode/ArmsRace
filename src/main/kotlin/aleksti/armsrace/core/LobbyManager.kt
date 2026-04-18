@@ -1,30 +1,34 @@
 ﻿package aleksti.armsrace.core
 
 import net.minecraft.server.level.ServerPlayer
+import net.minecraft.world.entity.player.Inventory
 import net.minecraft.world.item.Items
 import java.util.UUID
 
 object LobbyManager {
     val activeLobbies = mutableMapOf<Int, LobbyInstance>()
     val playerLevels = mutableMapOf<UUID, Int>()
-    var id = 0
+    val inventories = mutableMapOf<UUID, Inventory>()
+    var id = activeLobbies.size + 1
 
-    val weapons = listOf(
-        Items.WOODEN_SWORD,
-        Items.STONE_SWORD,
-        Items.IRON_SWORD,
-        Items.DIAMOND_SWORD
-    )
+//    val weapons = listOf(
+//        Items.WOODEN_SWORD,
+//        Items.STONE_SWORD,
+//        Items.IRON_SWORD,
+//        Items.DIAMOND_SWORD
+//    )
 
     fun createLobby(): String {
-        id += 1
         val template = LobbyTemplate(
-            listOf(
-                SpawnPoint(143.0, -57.0, 28.0),
-//                    SpawnPoint(70.0, 80.0, 80.0)
-            )
-        )
-        activeLobbies[id] = LobbyInstance(id, template)
+            id,
+            listOf(SpawnPoint(143.0, -57.0, 28.0)),
+            weapons=listOf(
+            Items.WOODEN_SWORD,
+            Items.STONE_SWORD,
+            Items.IRON_SWORD,
+            Items.DIAMOND_SWORD),)
+
+        activeLobbies[id] = LobbyInstance(template)
         return "Успешно создано лобби $id"
     }
 
@@ -37,14 +41,11 @@ object LobbyManager {
         return null
     }
 
-    fun deleteLobby(lobbyID: Int) {
-        val lobby = activeLobbies[lobbyID] ?: return
-        for (player in lobby.players)  {
-            player.teleportTo(137.0, -54.0, 0.0)
-            player.inventory.clearContent()
-            playerLevels.remove(player.uuid)
-        }
+    fun deleteLobby(lobbyID: Int?): String {
+        val lobby = activeLobbies[lobbyID] ?: return "Такого лобби нет"
+        for (player in lobby.players) removePlayer(player)
         activeLobbies.remove(lobbyID)
+        return "Лобби удалено"
     }
 
     fun addPlayer(player: ServerPlayer, id: Int? = null): String {
@@ -74,15 +75,16 @@ object LobbyManager {
         player.inventory.clearContent()
         lobby.players.remove(player)
         playerLevels.remove(player.uuid)
+        if (lobby.players.size == 0) deleteLobby(lobby.template.id)
         return "Вы вышли из игры"
     }
 
-    fun startCommandByPlayer(player: ServerPlayer) : String {
-        val lobby = findLobbyByPlayer(player) ?: return "Вас нет в лобби"
-        return lobby.start()
-    }
+//    fun startCommandByPlayer(player: ServerPlayer) : String {
+//        val lobby = findLobbyByPlayer(player) ?: return "Вас нет в лобби"
+//        return lobby.start()
+//    }
 
-    fun startCommand(lobbyID: Int): String {
+    fun startCommand(lobbyID: Int?): String {
         val lobby = activeLobbies[lobbyID] ?: return "Лобби не найдено"
         return lobby.start()
     }

@@ -34,7 +34,7 @@ class ArmsRaceCommand {
                 .then(Commands.literal("start")
                     .requires { sourceStack -> sourceStack.hasPermission(2) }
                     .executes { ctx ->
-                        ctx.source.sendSuccess({ Component.literal(LobbyManager.startCommandByPlayer(ctx.source.playerOrException)) }, false)
+                        ctx.source.sendSuccess({ Component.literal(LobbyManager.startCommand(LobbyManager.findLobbyByPlayer(ctx.source.playerOrException)?.template?.id))}, false)
                         1
                     }
                     .then(Commands.argument("start_id", IntegerArgumentType.integer(1))
@@ -48,6 +48,18 @@ class ArmsRaceCommand {
                         ctx.source.sendSuccess({ Component.literal(LobbyManager.removePlayer(ctx.source.playerOrException)) }, false)
                         1
                     }
+                )
+                .then(Commands.literal("stop")
+                    .requires { sourceStack -> sourceStack.hasPermission(2) }
+                    .executes { ctx ->
+                        ctx.source.sendSuccess({ Component.literal(LobbyManager.deleteLobby(LobbyManager.findLobbyByPlayer(ctx.source.playerOrException)?.template?.id))}, false)
+                        1
+                    }
+                    .then(Commands.argument("stop_id", IntegerArgumentType.integer(1))
+                        .executes { ctx ->
+                            ctx.source.sendSuccess({ Component.literal(LobbyManager.deleteLobby(IntegerArgumentType.getInteger(ctx, "stop_id")))}, false)
+                            1
+                        })
                 )
         )
     }
