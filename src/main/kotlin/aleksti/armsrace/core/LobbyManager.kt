@@ -20,7 +20,7 @@ object LobbyManager {
         id += 1
         val template = LobbyTemplate(
             listOf(
-                SpawnPoint(50.0, 60.0, 80.0),
+                SpawnPoint(143.0, -57.0, 28.0),
 //                    SpawnPoint(70.0, 80.0, 80.0)
             )
         )
@@ -40,7 +40,7 @@ object LobbyManager {
     fun deleteLobby(lobbyID: Int) {
         val lobby = activeLobbies[lobbyID] ?: return
         for (player in lobby.players)  {
-            player.teleportTo(0.0, 0.0, 0.0)
+            player.teleportTo(137.0, -54.0, 0.0)
             player.inventory.clearContent()
             playerLevels.remove(player.uuid)
         }
@@ -70,7 +70,7 @@ object LobbyManager {
 
     fun removePlayer(player: ServerPlayer): String {
         val lobby = findLobbyByPlayer(player) ?: return "Вы не в лобби"
-        player.teleportTo(0.0, 0.0, 0.0)
+        player.teleportTo(137.0, -54.0, 0.0)
         player.inventory.clearContent()
         lobby.players.remove(player)
         playerLevels.remove(player.uuid)
