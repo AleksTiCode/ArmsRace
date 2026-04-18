@@ -43,7 +43,7 @@ object LobbyManager {
 
     fun deleteLobby(lobbyID: Int?): String {
         val lobby = activeLobbies[lobbyID] ?: return "Такого лобби нет"
-        for (player in lobby.players) removePlayer(player)
+        for (player in lobby.players.toList()) removePlayer(player)
         activeLobbies.remove(lobbyID)
         return "Лобби удалено"
     }
@@ -54,9 +54,10 @@ object LobbyManager {
         }
         if (id == null) {
             for (instance in activeLobbies.values) {
-                if (instance.state == GameState.WAITING && instance.players.size < instance.template.spawns.size) {
+                if (instance.state != GameState.PLAYING && instance.players.size < instance.template.spawns.size) {
                     instance.players.add(player)
                     playerLevels[player.uuid] = 0
+                    if (instance.players.size == instance.template.spawns.size) startCommand(findLobbyByPlayer(player)?.template?.id)
                     return "Вы успешно присоединились к лобби"
                 }
             }

@@ -6,10 +6,10 @@ import net.minecraft.world.item.Items
 
 class LobbyInstance( val template: LobbyTemplate) {
     val players = mutableListOf<ServerPlayer>()
-    var state = GameState.WAITING
+    var state = GameState.LOBBY
 
     fun start(): String {
-        if (state == GameState.WAITING && players.size >= 1) {
+        if (state != GameState.PLAYING && players.size >= 1) {
             return try {
                 state = GameState.PLAYING
 

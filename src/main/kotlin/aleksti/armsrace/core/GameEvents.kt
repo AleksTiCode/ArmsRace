@@ -38,9 +38,9 @@ object GameEvents {
                 source.inventory.selected = 0
             }
         }
-        if (entity is ServerPlayer && source is Zombie) {
+        if (entity is ServerPlayer) {
             val lobby = LobbyManager.findLobbyByPlayer(entity) ?: return
-            if (lobby.state != GameState.PLAYING) return
+            if (lobby.state == GameState.LOBBY) return
             if (lobby.template.instantRespawn == false) return
             val spawn = lobby.template.spawns.random()
             event.isCanceled = true
@@ -51,37 +51,33 @@ object GameEvents {
     }
 
     @SubscribeEvent
-    fun onEntityDeathAndRespawnFalse(event: PlayerEvent.PlayerRespawnEvent) {
-        val entity = event.entity as? ServerPlayer ?: return
-        val lobby = LobbyManager.findLobbyByPlayer(entity) ?: return
-        if (lobby.state == GameState.LOBBY) return
+    fun onEntityDeathAndRespawnFalse(event: PlayerEvent.PlayerRespawnEvent) = runIfInGame(event.entity) {player, lobby ->
         val spawn = lobby.template.spawns.random()
-        entity.teleportTo(spawn.x, spawn.y, spawn.z)
+        player.teleportTo(spawn.x, spawn.y, spawn.z)
     }
 
     @SubscribeEvent
-    fun onPlayerTick(event: PlayerTickEvent.Post) {
-        val player = event.entity as? ServerPlayer ?: return
-        if (player.level().isClientSide) {
-            val food = player.foodData
-            food.foodLevel = 20
-            food.setSaturation(5.0f)
+    fun onPlayerTick(event: PlayerTickEvent.Post) = runIfInGame(event.entity) { player, lobby->
+        val food = event.entity.foodData
+        food.foodLevel = 20
+        food.setSaturation(5.0f)
+    }
+
+    @SubscribeEvent
+    fun onEntityDrop(event: ItemTossEvent) = runIfInGame(event.entity) { player, lobby ->
+        event.isCanceled = true // Запрещаем выбрасывать на Q
+    }
+
+    @SubscribeEvent
+    fun onEntityDeathDrop(event: LivingDropsEvent) = runIfInGame(event.entity) { player, lobby ->
+        event.isCanceled = true // Запрещаем выпадение лута при смерти
+    }
+
+    private inline fun runIfInGame(entity: Entity?, action: (ServerPlayer, LobbyInstance) -> Unit) {
+        val player = entity as? ServerPlayer ?: return
+        val lobby = LobbyManager.findLobbyByPlayer(player) ?: return
+        if (lobby.state != GameState.LOBBY) {
+            action(player, lobby) // Вызываем переданную логику
         }
-    }
-
-    @SubscribeEvent
-    fun onEntityDrop(event: ItemTossEvent) {
-        val entity = event.entity as? ServerPlayer ?: return
-        val lobby = LobbyManager.findLobbyByPlayer(entity) ?: return
-        if (lobby.state != GameState.PLAYING) return
-        event.isCanceled = true
-    }
-
-    @SubscribeEvent
-    fun onEntityDeathDrop(event: LivingDropsEvent) {
-        val entity = event.entity as? ServerPlayer ?: return
-        val lobby = LobbyManager.findLobbyByPlayer(entity) ?: return
-        if (lobby.state != GameState.PLAYING) return
-        event.isCanceled = true
     }
 }
