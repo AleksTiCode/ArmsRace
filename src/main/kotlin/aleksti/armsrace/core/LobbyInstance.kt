@@ -9,7 +9,7 @@ class LobbyInstance( val template: LobbyTemplate) {
     var state = GameState.LOBBY
 
     fun start(gameState: GameState): String {
-        if (state != GameState.PLAYING && players.size <= template.spawns.size) {
+        if (state != GameState.PLAYING && players.size in 1 until template.spawns.size) {
             state = gameState
             for ((index, player) in players.withIndex()) {
                 val spawn = template.spawns.getOrNull(index) ?: return "Недостаточно точек спавна"
