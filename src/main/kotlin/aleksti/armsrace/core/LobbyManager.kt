@@ -2,13 +2,14 @@
 
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.entity.player.Inventory
+import net.minecraft.world.item.ItemStack
 import net.minecraft.world.item.Items
 import java.util.UUID
 
 object LobbyManager {
     val activeLobbies = mutableMapOf<Int, LobbyInstance>()
     val playerLevels = mutableMapOf<UUID, Int>()
-    val inventories = mutableMapOf<UUID, Inventory>()
+    val inventories = mutableMapOf<UUID, List<ItemStack>>()
     var id = activeLobbies.size + 1
 
 //    val weapons = listOf(
@@ -74,6 +75,10 @@ object LobbyManager {
         val lobby = findLobbyByPlayer(player) ?: return "Вы не в лобби"
         player.teleportTo(137.0, -54.0, 0.0)
         player.inventory.clearContent()
+        val savedItems = inventories.remove(player.uuid)
+        savedItems?.forEachIndexed { index, itemStack ->
+            player.inventory.setItem(index, itemStack)
+        }
         lobby.players.remove(player)
         playerLevels.remove(player.uuid)
         if (lobby.players.size == 0) deleteLobby(lobby.template.id)
@@ -87,6 +92,12 @@ object LobbyManager {
 
     fun startCommand(lobbyID: Int?): String {
         val lobby = activeLobbies[lobbyID] ?: return "Лобби не найдено"
-        return lobby.start()
+        if (lobby.state == GameState.PLAYING) return "Игра уже идёт"
+        if (lobby.state == GameState.WAITING) {
+            for (player in lobby.players) playerLevels[player.uuid] = 0
+            return lobby.start(GameState.PLAYING)
+        } else return lobby.start(GameState.WAITING)
     }
+
+
 }

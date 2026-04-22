@@ -8,26 +8,19 @@ class LobbyInstance( val template: LobbyTemplate) {
     val players = mutableListOf<ServerPlayer>()
     var state = GameState.LOBBY
 
-    fun start(): String {
-        if (state != GameState.PLAYING && players.size >= 1) {
-            return try {
-                state = GameState.PLAYING
-
-                for ((index, player) in players.withIndex()) {
-                    val spawn = template.spawns.getOrNull(index) ?: return "Недостаточно точек спавна"
-                    LobbyManager.inventories[player.uuid] = player.inventory
-                    player.teleportTo(spawn.x, spawn.y, spawn.z)
-                    player.inventory.clearContent()
-                    player.inventory.setItem(0, ItemStack(Items.WOODEN_SWORD))
-                    player.inventory.selected = 0
-                }
-
-                "Успешная телепортация"
-            } catch (e: Exception) {
-                "Ошибка $e"
+    fun start(gameState: GameState): String {
+        if (state != GameState.PLAYING && players.size <= template.spawns.size) {
+            state = gameState
+            for ((index, player) in players.withIndex()) {
+                val spawn = template.spawns.getOrNull(index) ?: return "Недостаточно точек спавна"
+                if (gameState == GameState.WAITING) LobbyManager.inventories[player.uuid] = player.inventory.items.map  {it.copy()}
+                player.health = 20f
+                player.teleportTo(spawn.x, spawn.y, spawn.z)
+                player.inventory.clearContent()
+                player.inventory.setItem(0, ItemStack(Items.WOODEN_SWORD))
+                player.inventory.selected = 0
             }
-        }
-
-        return "Игроков мало или игра уже идет"
+        } else return "Игроков мало или игра уже идет"
+        return "Игра началась"
     }
 }
