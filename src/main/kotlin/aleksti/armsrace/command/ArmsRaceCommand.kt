@@ -12,18 +12,24 @@ class ArmsRaceCommand {
     fun register(dispatcher: CommandDispatcher<CommandSourceStack>) {
         dispatcher.register(
             Commands.literal("armsrace")
+                .executes { ctx ->
+                    // Это сработает, если игрок введет просто /armsrace
+                    ctx.source.sendSuccess({ Component.literal("Используйте: /armsrace create | join | leave | start") }, false)
+                    1
+                }
                 .then(Commands.literal("create")
                     .requires { sourceStack -> sourceStack.hasPermission(2) }
-//                    .executes { ctx ->
-//                        ctx.source.sendSuccess({ Component.literal(LobbyManager.createLobby()) }, false)
-//                        1
-//                    }
+                    .executes { ctx ->
+                        ctx.source.sendSuccess({ Component.literal("Введите параметр id") }, false)
+                        1
+                    }
+                )
                     .then(Commands.argument("template_id", StringArgumentType.string())
                         .executes { ctx ->
                             ctx.source.sendSuccess({ Component.literal(LobbyManager.createLobby(StringArgumentType.getString(ctx, "template_id")))}, false)
                             1
                         }
-                )
+                    )
                 .then(Commands.literal("join")
                     .executes { ctx ->
                         ctx.source.sendSuccess({ Component.literal(LobbyManager.addPlayer(ctx.source.playerOrException)) }, false)
@@ -66,6 +72,6 @@ class ArmsRaceCommand {
                             1
                         })
                 )
-                ))
+        )
     }
 }
