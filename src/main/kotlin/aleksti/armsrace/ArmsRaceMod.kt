@@ -1,6 +1,7 @@
 package aleksti.armsrace
 
 import aleksti.armsrace.command.ArmsRaceCommand
+import aleksti.armsrace.core.ConfigManager
 import aleksti.armsrace.core.GameEvents
 import net.neoforged.bus.api.IEventBus
 import net.neoforged.bus.api.SubscribeEvent
@@ -20,6 +21,7 @@ class ArmsRaceMod(modEventBus: IEventBus) {
     }
 
     fun onCommonSetup(event: FMLCommonSetupEvent) {
+        ConfigManager.loadConfigs()
         println("Common setup")
     }
 

@@ -3,9 +3,9 @@
 import aleksti.armsrace.core.LobbyManager
 import com.mojang.brigadier.CommandDispatcher
 import com.mojang.brigadier.arguments.IntegerArgumentType
+import com.mojang.brigadier.arguments.StringArgumentType
 import net.minecraft.commands.CommandSourceStack
 import net.minecraft.commands.Commands
-import net.minecraft.commands.arguments.RangeArgument
 import net.minecraft.network.chat.Component
 
 class ArmsRaceCommand {
@@ -14,10 +14,15 @@ class ArmsRaceCommand {
             Commands.literal("armsrace")
                 .then(Commands.literal("create")
                     .requires { sourceStack -> sourceStack.hasPermission(2) }
-                    .executes { ctx ->
-                        ctx.source.sendSuccess({ Component.literal(LobbyManager.createLobby()) }, false)
-                        1
-                    }
+//                    .executes { ctx ->
+//                        ctx.source.sendSuccess({ Component.literal(LobbyManager.createLobby()) }, false)
+//                        1
+//                    }
+                    .then(Commands.argument("template_id", StringArgumentType.string())
+                        .executes { ctx ->
+                            ctx.source.sendSuccess({ Component.literal(LobbyManager.createLobby(StringArgumentType.getString(ctx, "template_id")))}, false)
+                            1
+                        }
                 )
                 .then(Commands.literal("join")
                     .executes { ctx ->
@@ -34,7 +39,7 @@ class ArmsRaceCommand {
                 .then(Commands.literal("start")
                     .requires { sourceStack -> sourceStack.hasPermission(2) }
                     .executes { ctx ->
-                        ctx.source.sendSuccess({ Component.literal(LobbyManager.startCommand(LobbyManager.findLobbyByPlayer(ctx.source.playerOrException)?.template?.id))}, false)
+                        ctx.source.sendSuccess({ Component.literal(LobbyManager.startCommand(LobbyManager.findLobbyByPlayer(ctx.source.playerOrException)?.id))}, false)
                         1
                     }
                     .then(Commands.argument("start_id", IntegerArgumentType.integer(1))
@@ -52,7 +57,7 @@ class ArmsRaceCommand {
                 .then(Commands.literal("stop")
                     .requires { sourceStack -> sourceStack.hasPermission(2) }
                     .executes { ctx ->
-                        ctx.source.sendSuccess({ Component.literal(LobbyManager.deleteLobby(LobbyManager.findLobbyByPlayer(ctx.source.playerOrException)?.template?.id))}, false)
+                        ctx.source.sendSuccess({ Component.literal(LobbyManager.deleteLobby(LobbyManager.findLobbyByPlayer(ctx.source.playerOrException)?.id))}, false)
                         1
                     }
                     .then(Commands.argument("stop_id", IntegerArgumentType.integer(1))
@@ -61,6 +66,6 @@ class ArmsRaceCommand {
                             1
                         })
                 )
-        )
+                ))
     }
 }

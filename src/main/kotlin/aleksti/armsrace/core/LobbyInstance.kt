@@ -4,7 +4,7 @@ import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.item.Items
 
-class LobbyInstance( val template: LobbyTemplate) {
+class LobbyInstance(val id: Int, val template: LobbyTemplate) {
     val players = mutableListOf<ServerPlayer>()
     var state = GameState.LOBBY
 

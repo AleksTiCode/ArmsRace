@@ -1,9 +1,9 @@
 package aleksti.armsrace.core
 
+import aleksti.armsrace.core.LobbyManager.getItemFromString
 import net.minecraft.network.chat.Component
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.entity.Entity
-import net.minecraft.world.entity.monster.Zombie
 import net.minecraft.world.item.ItemStack
 import net.neoforged.bus.api.SubscribeEvent
 import net.neoforged.neoforge.event.entity.item.ItemTossEvent
@@ -26,12 +26,13 @@ object GameEvents {
             if (lobby.state == GameState.LOBBY) return
             val newLevel = level + 1
             LobbyManager.playerLevels[source.uuid] = newLevel
-            val item = lobby.template.weapons.getOrNull(newLevel)
+            val index = lobby.template.weapons.getOrNull(newLevel) ?: return
+            val item = getItemFromString(index)
             if (item == null) {
                 for (player in lobby.players) {
                     player.sendSystemMessage(Component.literal("Победил ${source.gameProfile.name}"))
                 }
-                LobbyManager.deleteLobby(lobby.template.id)
+                LobbyManager.deleteLobby(lobby.id)
             } else {
                 val stack = ItemStack(item)
                 source.inventory.setItem(0, stack)
