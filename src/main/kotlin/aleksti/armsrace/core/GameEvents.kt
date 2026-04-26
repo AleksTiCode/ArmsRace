@@ -3,13 +3,17 @@ package aleksti.armsrace.core
 import aleksti.armsrace.core.LobbyManager.getItemFromString
 import net.minecraft.network.chat.Component
 import net.minecraft.server.level.ServerPlayer
+import net.minecraft.sounds.SoundEvents
+import net.minecraft.sounds.SoundSource
 import net.minecraft.world.entity.Entity
 import net.minecraft.world.item.ItemStack
 import net.neoforged.bus.api.SubscribeEvent
 import net.neoforged.neoforge.event.entity.item.ItemTossEvent
+import net.neoforged.neoforge.event.entity.living.LivingDamageEvent
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent
 import net.neoforged.neoforge.event.entity.living.LivingDropsEvent
 import net.neoforged.neoforge.event.entity.player.PlayerEvent
+import net.neoforged.neoforge.event.level.BlockEvent
 import net.neoforged.neoforge.event.tick.PlayerTickEvent
 import net.neoforged.neoforge.event.tick.ServerTickEvent
 
@@ -36,6 +40,8 @@ object GameEvents {
             } else {
                 source.inventory.setItem(0, ItemStack(getItemFromString(index)))
                 source.inventory.selected = 0
+                source.displayClientMessage(Component.literal("§eОружие: ${newLevel}/${lobby.template.weapons.size}"), true)
+                source.playNotifySound(SoundEvents.PLAYER_LEVELUP, SoundSource.PLAYERS, 1.0f, 1.0f)
             }
         }
         if (entity is ServerPlayer) {
@@ -76,6 +82,22 @@ object GameEvents {
     @SubscribeEvent
     fun onServerTick(event: ServerTickEvent.Post) {
         for (lobby in LobbyManager.activeLobbies.values) lobby.tick()
+    }
+
+    @SubscribeEvent
+    fun onBlockBreak(event: BlockEvent.BreakEvent) = runIfInGame(event.player) { player, lobby ->
+        if (!lobby.template.allowBlockBreaking == false) event.isCanceled = true
+    }
+
+    @SubscribeEvent
+    fun onBlockPlace(event: BlockEvent.EntityPlaceEvent) = runIfInGame(event.entity) { player, lobby ->
+        if (!lobby.template.allowBlockBreaking == false) event.isCanceled = true
+    }
+
+    @SubscribeEvent
+    fun onPlayerDamage(event: LivingDamageEvent.Pre) = runIfInGame(event.entity) { player, lobby ->
+        val source = event.source as? ServerPlayer ?: return
+        if (lobby.players[player] == lobby.players[source]) event
     }
 
     private inline fun runIfInGame(entity: Entity?, action: (ServerPlayer, LobbyInstance) -> Unit) {

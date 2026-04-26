@@ -1,6 +1,8 @@
 ﻿package aleksti.armsrace.core
 
 import net.minecraft.server.level.ServerPlayer
+import net.minecraft.world.effect.MobEffectInstance
+import net.minecraft.world.effect.MobEffects
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.item.Items
 
@@ -42,6 +44,7 @@ class LobbyInstance(val id: Int, val template: LobbyTemplate) {
             player.health = 20f
             player.inventory.selected = 0
             player.teleportTo(spawn.x, spawn.y, spawn.z)
+            player.addEffect(MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 60, 255, false, false))
         }
     }
 
