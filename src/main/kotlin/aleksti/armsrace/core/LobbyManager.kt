@@ -22,7 +22,7 @@ object LobbyManager {
 //            Items.IRON_SWORD,
 //            Items.DIAMOND_SWORD),)
         val id = activeLobbies.size + 1
-        val template = ConfigManager.templates.find { it.template_id == template_id } ?: return "Арена не найдена!"
+        val template = ConfigManager.templates.find { it.templateId == template_id } ?: return "Арена не найдена!"
         activeLobbies[id] = LobbyInstance(id, template)
         return "Успешно создано лобби $template_id - $id"
     }
@@ -38,7 +38,7 @@ object LobbyManager {
 
     fun deleteLobby(lobbyID: Int?): String {
         val lobby = activeLobbies[lobbyID] ?: return "Такого лобби нет"
-        for (player in lobby.players.toList()) removePlayer(player)
+        for (player in lobby.players.keys.toList()) removePlayer(player)
         activeLobbies.remove(lobbyID)
         return "Лобби удалено"
     }
@@ -48,18 +48,18 @@ object LobbyManager {
             return "Вы уже в лобби"
         }
         if (id == null) {
-            for (instance in activeLobbies.values) {
-                if (instance.state != GameState.PLAYING && instance.players.size < instance.template.spawns.size) {
-                    instance.players.add(player)
+            for (lobby in activeLobbies.values) {
+                val totalSpawns = lobby.template.teams.sumOf { it.spawns.size }
+                if (lobby.state != GameState.PLAYING && lobby.players.size < totalSpawns) {
+                    lobby.players[player] = ""
                     playerLevels[player.uuid] = 0
-                    if (instance.players.size == instance.template.spawns.size) startCommand(findLobbyByPlayer(player)?.id)
                     return "Вы успешно присоединились к лобби"
                 }
             }
             return "Нет доступного лобби"
         } else {
             val lobby = activeLobbies[id] ?: return "Лобби не найдено"
-            lobby.players.add(player)
+            lobby.players[player] = ""
             playerLevels[player.uuid] = 0
             return "Вы успешно присоединились к лобби $id"
         }
@@ -83,7 +83,7 @@ object LobbyManager {
         val lobby = activeLobbies[lobbyID] ?: return "Лобби не найдено"
         if (lobby.state == GameState.PLAYING) return "Игра уже идёт"
         if (lobby.state == GameState.WAITING) {
-            for (player in lobby.players) playerLevels[player.uuid] = 0
+            for (player in lobby.players.keys) playerLevels[player.uuid] = 0
             return lobby.start(GameState.PLAYING)
         } else return lobby.start(GameState.WAITING)
     }

@@ -14,17 +14,26 @@ data class SpawnPoint(
     val z: Double,
 //    val world: String
 )
+@Serializable
+data class TeamTemplate(
+    val teamId: String, // Например: "red", "blue" или "terrorists"
+    val spawns: List<SpawnPoint>
+)
+
 
 @Serializable
 data class LobbyTemplate(
-    val template_id: String,
-    val spawns: List<SpawnPoint>,
+    val templateId: String,
+    val teams: List<TeamTemplate>,
     val instantRespawn: Boolean = true,
 //    val requiredKillsToWin: Int = 3,
     val allowBlockBreaking: Boolean = false,
     val weapons: List<String>,
-    val type: String = "Team",
+//    val type: String = "Team",
     val minPlayers: Int = 1,
+//    val minPlayersToWarmUp: Int = 1,
+    val maxPlayers: Int,
+    val warmupTime: Int = 60,
     val allPlayersNeed: Boolean = false,
     val waitingWarmUp: Boolean = true,
 )

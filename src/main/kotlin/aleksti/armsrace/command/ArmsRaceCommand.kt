@@ -6,6 +6,7 @@ import com.mojang.brigadier.arguments.IntegerArgumentType
 import com.mojang.brigadier.arguments.StringArgumentType
 import net.minecraft.commands.CommandSourceStack
 import net.minecraft.commands.Commands
+import net.minecraft.commands.SharedSuggestionProvider
 import net.minecraft.network.chat.Component
 
 class ArmsRaceCommand {
@@ -23,13 +24,19 @@ class ArmsRaceCommand {
                         ctx.source.sendSuccess({ Component.literal("Введите параметр id") }, false)
                         1
                     }
-                )
-                    .then(Commands.argument("template_id", StringArgumentType.string())
+
+                    .then(Commands.argument("template_id", StringArgumentType.word())
+                        .suggests { context, builder ->
+                            // Берем список всех загруженных шаблонов и достаем из них template_id
+                            val availableIds = aleksti.armsrace.core.ConfigManager.templates.map { it.templateId }
+                            // Отдаем их Майнкрафту, чтобы он показал их в чате
+                            SharedSuggestionProvider.suggest(availableIds, builder)
+                        }
                         .executes { ctx ->
                             ctx.source.sendSuccess({ Component.literal(LobbyManager.createLobby(StringArgumentType.getString(ctx, "template_id")))}, false)
                             1
                         }
-                    )
+                    ))
                 .then(Commands.literal("join")
                     .executes { ctx ->
                         ctx.source.sendSuccess({ Component.literal(LobbyManager.addPlayer(ctx.source.playerOrException)) }, false)

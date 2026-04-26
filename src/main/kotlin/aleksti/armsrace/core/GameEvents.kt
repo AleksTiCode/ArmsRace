@@ -11,6 +11,7 @@ import net.neoforged.neoforge.event.entity.living.LivingDeathEvent
 import net.neoforged.neoforge.event.entity.living.LivingDropsEvent
 import net.neoforged.neoforge.event.entity.player.PlayerEvent
 import net.neoforged.neoforge.event.tick.PlayerTickEvent
+import net.neoforged.neoforge.event.tick.ServerTickEvent
 
 object GameEvents {
 
@@ -21,21 +22,19 @@ object GameEvents {
         if (source is ServerPlayer) {
             val lobby = LobbyManager.findLobbyByPlayer(source) ?: return
             val level = LobbyManager.playerLevels[source.uuid] ?: return
-            val spawn = lobby.template.spawns.random()
+//            val spawn = lobby.template.spawns.random()
 //            val level2 = LobbyManager.playerLevels[entity.uuid] ?: return
             if (lobby.state == GameState.LOBBY) return
             val newLevel = level + 1
             LobbyManager.playerLevels[source.uuid] = newLevel
-            val index = lobby.template.weapons.getOrNull(newLevel) ?: return
-            val item = getItemFromString(index)
-            if (item == null) {
-                for (player in lobby.players) {
+            val index = lobby.template.weapons.getOrNull(newLevel)
+            if (index == null) {
+                for (player in lobby.players.keys) {
                     player.sendSystemMessage(Component.literal("Победил ${source.gameProfile.name}"))
                 }
                 LobbyManager.deleteLobby(lobby.id)
             } else {
-                val stack = ItemStack(item)
-                source.inventory.setItem(0, stack)
+                source.inventory.setItem(0, ItemStack(getItemFromString(index)))
                 source.inventory.selected = 0
             }
         }
@@ -43,18 +42,18 @@ object GameEvents {
             val lobby = LobbyManager.findLobbyByPlayer(entity) ?: return
             if (lobby.state == GameState.LOBBY) return
             if (lobby.template.instantRespawn == false) return
-            val spawn = lobby.template.spawns.random()
+//            val spawn = lobby.template.spawns.random()
             event.isCanceled = true
-            entity.health = 20f
-            entity.teleportTo(spawn.x, spawn.y, spawn.z)
+            lobby.teleportPlayerToSpawn(entity)
+//            entity.health = 20f
+//            entity.teleportTo(spawn.x, spawn.y, spawn.z)
         }
 
     }
 
     @SubscribeEvent
     fun onEntityDeathAndRespawnFalse(event: PlayerEvent.PlayerRespawnEvent) = runIfInGame(event.entity) {player, lobby ->
-        val spawn = lobby.template.spawns.random()
-        player.teleportTo(spawn.x, spawn.y, spawn.z)
+        lobby.teleportPlayerToSpawn(player)
     }
 
     @SubscribeEvent
@@ -72,6 +71,11 @@ object GameEvents {
     @SubscribeEvent
     fun onEntityDeathDrop(event: LivingDropsEvent) = runIfInGame(event.entity) { player, lobby ->
         event.isCanceled = true // Запрещаем выпадение лута при смерти
+    }
+
+    @SubscribeEvent
+    fun onServerTick(event: ServerTickEvent.Post) {
+        for (lobby in LobbyManager.activeLobbies.values) lobby.tick()
     }
 
     private inline fun runIfInGame(entity: Entity?, action: (ServerPlayer, LobbyInstance) -> Unit) {
