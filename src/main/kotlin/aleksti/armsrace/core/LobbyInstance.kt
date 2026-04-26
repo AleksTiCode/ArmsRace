@@ -46,13 +46,17 @@ class LobbyInstance(val id: Int, val template: LobbyTemplate) {
     }
 
     fun checkWarmup() {
-        if (players.size == template.maxPlayers) start(GameState.PLAYING)
-        else if (players.size >= template.minPlayers) {
-            start(GameState.WAITING)
-            warmupTicks = template.warmupTime * 20
+        if (template.warmup == true) {
+            if (players.size == template.maxPlayers) start(GameState.PLAYING)
+            else if (players.size >= template.minPlayers) {
+                start(GameState.WAITING)
+                warmupTicks = template.warmupTime * 20
+            } else if (players.size < template.minPlayers) warmupTicks = -1
+            else if (players.size == 0) LobbyManager.deleteLobby(id)
+        } else {
+            if (players.size == template.maxPlayers) start(GameState.PLAYING)
+            else warmupTicks = -1
         }
-        else if (players.size < template.minPlayers) warmupTicks = -1
-        else LobbyManager.deleteLobby(id)
     }
 
     fun tick() {
