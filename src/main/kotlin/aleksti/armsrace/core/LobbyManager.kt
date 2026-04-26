@@ -53,6 +53,7 @@ object LobbyManager {
                 if (lobby.state != GameState.PLAYING && lobby.players.size < totalSpawns) {
                     lobby.players[player] = ""
                     playerLevels[player.uuid] = 0
+                    lobby.checkWarmup()
                     return "Вы успешно присоединились к лобби"
                 }
             }
@@ -61,6 +62,7 @@ object LobbyManager {
             val lobby = activeLobbies[id] ?: return "Лобби не найдено"
             lobby.players[player] = ""
             playerLevels[player.uuid] = 0
+            lobby.checkWarmup()
             return "Вы успешно присоединились к лобби $id"
         }
     }
@@ -75,7 +77,8 @@ object LobbyManager {
         }
         lobby.players.remove(player)
         playerLevels.remove(player.uuid)
-        if (lobby.players.size == 0) deleteLobby(lobby.id)
+        lobby.checkWarmup()
+//        if (lobby.players.size == 0) deleteLobby(lobby.id)
         return "Вы вышли из игры"
     }
 
