@@ -9,6 +9,7 @@ import net.minecraft.world.scores.DisplaySlot
 import net.minecraft.world.scores.Objective
 import net.minecraft.world.scores.Scoreboard
 import net.minecraft.world.scores.criteria.ObjectiveCriteria
+import java.util.Optional
 
 object ScoreboardManager {
 
@@ -38,8 +39,8 @@ object ScoreboardManager {
                 text, // Текст строки выступает в роли "Владельца"
                 objectiveName,
                 score, // Чем выше эта цифра, тем выше строка будет на экране
-                null,
-                null
+                Optional.empty(),
+                Optional.empty(),
             )
             player.connection.send(packet)
         }
