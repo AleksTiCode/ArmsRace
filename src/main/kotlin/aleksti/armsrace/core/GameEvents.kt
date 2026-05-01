@@ -2,6 +2,9 @@ package aleksti.armsrace.core
 
 import aleksti.armsrace.core.LobbyManager.getItemFromString
 import net.minecraft.network.chat.Component
+import net.minecraft.network.protocol.game.ClientboundSetSubtitleTextPacket
+import net.minecraft.network.protocol.game.ClientboundSetTitleTextPacket
+import net.minecraft.network.protocol.game.ClientboundSetTitlesAnimationPacket
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.sounds.SoundEvents
 import net.minecraft.sounds.SoundSource
@@ -12,6 +15,8 @@ import net.neoforged.neoforge.event.entity.item.ItemTossEvent
 import net.neoforged.neoforge.event.entity.living.LivingDamageEvent
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent
 import net.neoforged.neoforge.event.entity.living.LivingDropsEvent
+import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent
+import net.neoforged.neoforge.event.entity.player.AttackEntityEvent
 import net.neoforged.neoforge.event.entity.player.PlayerEvent
 import net.neoforged.neoforge.event.level.BlockEvent
 import net.neoforged.neoforge.event.tick.PlayerTickEvent
@@ -34,7 +39,9 @@ object GameEvents {
             val index = lobby.template.weapons.getOrNull(newLevel)
             if (index == null) {
                 for (player in lobby.players.keys) {
-                    player.sendSystemMessage(Component.literal("Победил ${source.gameProfile.name}"))
+                    player.connection.send(ClientboundSetTitlesAnimationPacket(10, 60, 20))
+                    player.connection.send(ClientboundSetTitleTextPacket(Component.literal("§6§lИГРА ОКОНЧЕНА")))
+                    player.connection.send(ClientboundSetSubtitleTextPacket(Component.literal("§fПобедил: §a${source.displayName?.string ?: source.name.string}")))
                 }
                 LobbyManager.deleteLobby(lobby.id)
             } else {
@@ -95,9 +102,9 @@ object GameEvents {
     }
 
     @SubscribeEvent
-    fun onPlayerDamage(event: LivingDamageEvent.Pre) = runIfInGame(event.entity) { player, lobby ->
+    fun onPlayerDamage(event: LivingIncomingDamageEvent) = runIfInGame(event.entity) { player, lobby ->
         val source = event.source as? ServerPlayer ?: return
-        if (lobby.players[player] == lobby.players[source]) event
+        if (lobby.players[player] == lobby.players[source]) event.isCanceled = true
     }
 
     private inline fun runIfInGame(entity: Entity?, action: (ServerPlayer, LobbyInstance) -> Unit) {
