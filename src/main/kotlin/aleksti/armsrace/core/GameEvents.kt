@@ -39,6 +39,7 @@ object GameEvents {
             val index = lobby.template.weapons.getOrNull(newLevel)
             if (index == null) {
                 for (player in lobby.players.keys) {
+                    ScoreboardManager.removeScoreboard(player)
                     player.connection.send(ClientboundSetTitlesAnimationPacket(10, 60, 20))
                     player.connection.send(ClientboundSetTitleTextPacket(Component.literal("§6§lИГРА ОКОНЧЕНА")))
                     player.connection.send(ClientboundSetSubtitleTextPacket(Component.literal("§fПобедил: §a${source.displayName?.string ?: source.name.string}")))
@@ -49,6 +50,7 @@ object GameEvents {
                 source.inventory.selected = 0
                 source.displayClientMessage(Component.literal("§eОружие: ${newLevel}/${lobby.template.weapons.size}"), true)
                 source.playNotifySound(SoundEvents.PLAYER_LEVELUP, SoundSource.PLAYERS, 1.0f, 1.0f)
+                for (player in lobby.players.keys) ScoreboardManager.updateScoreboard(player, lobby)
             }
         }
         if (entity is ServerPlayer) {

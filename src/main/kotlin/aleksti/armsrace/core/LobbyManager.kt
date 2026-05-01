@@ -77,6 +77,7 @@ object LobbyManager {
         }
         lobby.players.remove(player)
         playerLevels.remove(player.uuid)
+        ScoreboardManager.removeScoreboard(player)
         lobby.checkWarmup()
 //        if (lobby.players.size == 0) deleteLobby(lobby.id)
         return "Вы вышли из игры"

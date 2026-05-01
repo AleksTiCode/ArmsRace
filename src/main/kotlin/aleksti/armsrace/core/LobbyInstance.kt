@@ -67,6 +67,12 @@ class LobbyInstance(val id: Int, val template: LobbyTemplate) {
 
         warmupTicks-- // Отнимаем 1 тик
 
+        if (warmupTicks % 20 == 0) {
+            for (player in players.keys) {
+                ScoreboardManager.updateScoreboard(player, this)
+            }
+        }
+
         // Если время вышло - стартуем!
         if (warmupTicks == 0) {
             start(GameState.PLAYING)
