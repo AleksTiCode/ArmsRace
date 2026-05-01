@@ -72,10 +72,16 @@ object GameEvents {
     }
 
     @SubscribeEvent
-    fun onPlayerTick(event: PlayerTickEvent.Post) = runIfInGame(event.entity) { player, lobby->
-        val food = event.entity.foodData
-        food.foodLevel = 20
-        food.setSaturation(5.0f)
+    fun onPlayerTick(event: ServerTickEvent.Post) {
+        for (lobby in LobbyManager.activeLobbies.values) {
+            if (lobby.state != GameState.LOBBY) {
+                for (player in lobby.players.keys) {
+                    val food = player.foodData
+                    food.foodLevel = 20
+                    food.setSaturation(5.0f)
+                }
+            }
+        }
     }
 
     @SubscribeEvent

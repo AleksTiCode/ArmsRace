@@ -10,6 +10,7 @@ import net.minecraft.world.scores.Objective
 import net.minecraft.world.scores.Scoreboard
 import net.minecraft.world.scores.criteria.ObjectiveCriteria
 import java.util.Optional
+import net.minecraft.network.chat.numbers.BlankFormat
 
 object ScoreboardManager {
 
@@ -25,7 +26,7 @@ object ScoreboardManager {
             Component.literal("§6§lГОНКА ВООРУЖЕНИЙ"), // Заголовок панели
             ObjectiveCriteria.RenderType.INTEGER,
             false,
-            null
+            BlankFormat.INSTANCE,
         )
 
         // 2. Отправляем пакеты: сначала удаляем старую панель (1), потом создаем новую (0), потом показываем справа
