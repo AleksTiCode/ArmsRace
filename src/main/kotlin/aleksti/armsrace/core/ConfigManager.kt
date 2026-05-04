@@ -31,10 +31,11 @@ object ConfigManager {
                 // Создаем болванку для примера
                 val defaultTemplate = LobbyTemplate(
                     templateId = "vanilla",
-                    teams = listOf(TeamTemplate("1", listOf(SpawnPoint(143.0, -57.0, 28.0))), TeamTemplate("2", listOf(SpawnPoint(80.0, -60.0, 8.0)))),
+                    teams = listOf(TeamTemplate("1", "§b",listOf(SpawnPoint(143.0, -57.0, 28.0))), TeamTemplate("2", "§a",listOf(SpawnPoint(80.0, -60.0, 8.0)))),
                     weapons = listOf("minecraft:wooden_sword", "minecraft:iron_sword", "minecraft:diamond_sword"),
-                    maxPlayers = 2,
+                    maxPlayers = 10,
                     warmupTime = 10,
+                    lobbyCoord = SpawnPoint(137.0, -54.0, 0.0),
                 )
                 val defaultList = listOf(defaultTemplate)
 

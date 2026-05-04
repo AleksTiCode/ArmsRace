@@ -23,7 +23,7 @@ object ScoreboardManager {
             scoreboard,
             objectiveName,
             ObjectiveCriteria.DUMMY,
-            Component.literal("§6§lГОНКА ВООРУЖЕНИЙ"), // Заголовок панели
+            Component.literal(lobby.template.displayName), // Заголовок панели
             ObjectiveCriteria.RenderType.INTEGER,
             false,
             BlankFormat.INSTANCE,
@@ -64,8 +64,14 @@ object ScoreboardManager {
             val sortedPlayers = lobby.players.keys.sortedByDescending { LobbyManager.playerLevels[it.uuid] ?: 0 }
 
             for ((index, p) in sortedPlayers.withIndex()) {
+                val playerTeamId = lobby.players[p] ?: ""
+
+// 2. Ищем эту команду в шаблоне и берем её цвет
+                val teamColor = lobby.template.teams.find { it.teamId == playerTeamId }?.colorCode ?: "§f"
+
+// 3. Выводим ник покрашенным!
                 val kills = LobbyManager.playerLevels[p.uuid] ?: 0
-                sendLine("§f${p.name.string}: §a$kills киллов", lineScore--)
+                sendLine("$teamColor${p.name.string}§f: §a$kills киллов", lineScore--)
 
                 // Выводим только Топ-5 игроков, чтобы панель не уехала в пол
                 if (index >= 4) break

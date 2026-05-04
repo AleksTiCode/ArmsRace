@@ -16,7 +16,6 @@ class LobbyInstance(val id: Int, val template: LobbyTemplate) {
             val availableTeams = template.teams.map { it.teamId }
             if (availableTeams.isEmpty()) return "Ошибка: в шаблоне нет команд!"
             state = gameState
-//            val playerList = players.keys.toList()
 
             for ((index, player) in players.keys.toList().withIndex()) {
                 val assignedTeamId = availableTeams[index % availableTeams.size]

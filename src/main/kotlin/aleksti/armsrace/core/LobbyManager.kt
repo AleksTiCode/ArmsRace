@@ -14,13 +14,6 @@ object LobbyManager {
     val inventories = mutableMapOf<UUID, List<ItemStack>>()
 
     fun createLobby(template_id: String): String {
-//        val template = LobbyTemplate(
-//            listOf(SpawnPoint(143.0, -57.0, 28.0)),
-//            weapons=listOf(
-//            Items.WOODEN_SWORD,
-//            Items.STONE_SWORD,
-//            Items.IRON_SWORD,
-//            Items.DIAMOND_SWORD),)
         val id = activeLobbies.size + 1
         val template = ConfigManager.templates.find { it.templateId == template_id } ?: return "Арена не найдена!"
         activeLobbies[id] = LobbyInstance(id, template)
@@ -54,7 +47,8 @@ object LobbyManager {
                     lobby.players[player] = ""
                     playerLevels[player.uuid] = 0
                     lobby.checkWarmup()
-                    return "Вы успешно присоединились к лобби"
+                    ScoreboardManager.updateScoreboard(player, lobby)
+                    return "Вы успешно присоединились к лобби ${lobby.id}"
                 }
             }
             return "Нет доступного лобби"
@@ -63,13 +57,15 @@ object LobbyManager {
             lobby.players[player] = ""
             playerLevels[player.uuid] = 0
             lobby.checkWarmup()
+            ScoreboardManager.updateScoreboard(player, lobby)
             return "Вы успешно присоединились к лобби $id"
         }
     }
 
     fun removePlayer(player: ServerPlayer): String {
         val lobby = findLobbyByPlayer(player) ?: return "Вы не в лобби"
-        player.teleportTo(137.0, -54.0, 0.0)
+        val spawn = lobby.template.lobbyCoord
+        player.teleportTo(spawn.x, spawn.y, spawn.z)
         player.inventory.clearContent()
         val savedItems = inventories.remove(player.uuid)
         savedItems?.forEachIndexed { index, itemStack ->
@@ -79,7 +75,6 @@ object LobbyManager {
         playerLevels.remove(player.uuid)
         ScoreboardManager.removeScoreboard(player)
         lobby.checkWarmup()
-//        if (lobby.players.size == 0) deleteLobby(lobby.id)
         return "Вы вышли из игры"
     }
 
@@ -95,6 +90,6 @@ object LobbyManager {
     fun getItemFromString(id: String): Item {
         val location = ResourceLocation.parse(id)
         // Если игра не найдет такой предмет, выдадим деревянный меч, чтобы игра не крашнулась
-        return BuiltInRegistries.ITEM.getOptional(location).orElse(Items.WOODEN_SWORD)
+        return BuiltInRegistries.ITEM.getOptional(location).orElse(Items.AIR)
     }
 }
