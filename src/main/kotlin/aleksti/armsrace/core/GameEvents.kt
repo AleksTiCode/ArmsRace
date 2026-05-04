@@ -67,17 +67,16 @@ object GameEvents {
         val entity = event.entity as? ServerPlayer ?: return
         val source = event.source.entity as? ServerPlayer ?: return // as? ServerPlayer ?: return
         val lobby = LobbyManager.findLobbyByPlayer(source) ?: return
+        val lobby2 = LobbyManager.findLobbyByPlayer(entity) ?: return
         val level = LobbyManager.playerLevels[source.uuid] ?: return
-//            val spawn = lobby.template.spawns.random()
-//            val level2 = LobbyManager.playerLevels[entity.uuid] ?: return
         if (lobby.state == GameState.LOBBY) return
         val newLevel = level + 1
         LobbyManager.playerLevels[source.uuid] = newLevel
         val index = lobby.template.weapons.getOrNull(newLevel)
         if (index == null) {
+            event.isCanceled = true
             if (lobby.state == GameState.PLAYING) {
                 for (player in lobby.players.keys) {
-                    event.isCanceled = true
                     ScoreboardManager.removeScoreboard(player)
                     player.connection.send(ClientboundSetTitlesAnimationPacket(10, 60, 20))
                     player.connection.send(ClientboundSetTitleTextPacket(Component.literal("§6§lИГРА ОКОНЧЕНА")))
@@ -85,17 +84,19 @@ object GameEvents {
                 }
                 LobbyManager.deleteLobby(lobby.id)}
             else if (lobby.state == GameState.WAITING) {
-                event.isCanceled = true
                 source.displayClientMessage(Component.literal("§eЭто было последнее оружие!"), true)
                 source.playNotifySound(SoundEvents.PLAYER_LEVELUP, SoundSource.PLAYERS, 1.0f, 1.0f)
+                if (lobby2.template.instantRespawn == false) return
+                lobby2.teleportPlayerToSpawn(entity)
             }
+
+
         } else {
             source.inventory.setItem(0, ItemStack(getItemFromString(index)))
             source.inventory.selected = 0
             source.displayClientMessage(Component.literal("§eОружие: ${newLevel}/${lobby.template.weapons.size}"), true)
             source.playNotifySound(SoundEvents.PLAYER_LEVELUP, SoundSource.PLAYERS, 1.0f, 1.0f)
             for (player in lobby.players.keys) ScoreboardManager.updateScoreboard(player, lobby)
-            val lobby2 = LobbyManager.findLobbyByPlayer(entity) ?: return
             if (lobby2.state == GameState.LOBBY) return
             if (lobby2.template.instantRespawn == false) return
             event.isCanceled = true
@@ -104,7 +105,7 @@ object GameEvents {
     }
 
     @SubscribeEvent
-    fun onEntityDeathAndRespawnFalse(event: PlayerEvent.PlayerRespawnEvent) = runIfInGame(event.entity) {player, lobby ->
+    fun onEntityDeathAndRespawn(event: PlayerEvent.PlayerRespawnEvent) = runIfInGame(event.entity) {player, lobby ->
         lobby.teleportPlayerToSpawn(player)
     }
 

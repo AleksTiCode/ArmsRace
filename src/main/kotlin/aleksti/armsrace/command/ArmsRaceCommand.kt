@@ -112,7 +112,9 @@ class ArmsRaceCommand {
                                 lobby.teleportPlayerToSpawn(targetPlayer)
 
                                 // 3. Обновляем скорборд, чтобы цвет ника изменился
-                                ScoreboardManager.updateScoreboard(targetPlayer, lobby)
+                                for (p in lobby.players.keys) {
+                                    ScoreboardManager.updateScoreboard(p, lobby)
+                                }
 
                                 ctx.source.sendSuccess({ Component.literal("§aИгрок ${targetPlayer.name.string} переведен в команду $newTeamId!") }, true)
                                 1
