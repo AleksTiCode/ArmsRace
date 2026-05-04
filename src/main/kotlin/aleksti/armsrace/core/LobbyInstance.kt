@@ -1,5 +1,6 @@
 ﻿package aleksti.armsrace.core
 
+import net.minecraft.network.chat.Component
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.effect.MobEffectInstance
 import net.minecraft.world.effect.MobEffects
@@ -54,8 +55,13 @@ class LobbyInstance(val id: Int, val template: LobbyTemplate) {
             else if (players.size >= template.minPlayers) {
                 start(GameState.WAITING)
                 warmupTicks = template.warmupTime * 20
-            } else if (players.size < template.minPlayers) warmupTicks = -1
-            else if (players.size == 0) LobbyManager.deleteLobby(id)
+            } else if (players.size < template.minPlayers && state != GameState.LOBBY) {
+//                warmupTicks = -1
+                for (p in players.keys) {
+                    p.sendSystemMessage(Component.literal("§cМатч отменен: недостаточно игроков!"))
+                }
+                LobbyManager.deleteLobby(id)
+            }
         } else {
             if (players.size == template.maxPlayers) start(GameState.PLAYING)
             else warmupTicks = -1

@@ -2,6 +2,7 @@ package aleksti.armsrace.core
 
 import aleksti.armsrace.core.LobbyManager.getItemFromString
 import net.minecraft.network.chat.Component
+import net.neoforged.neoforge.event.entity.player.PlayerEvent
 import net.minecraft.network.protocol.game.ClientboundSetSubtitleTextPacket
 import net.minecraft.network.protocol.game.ClientboundSetTitleTextPacket
 import net.minecraft.network.protocol.game.ClientboundSetTitlesAnimationPacket
@@ -12,14 +13,10 @@ import net.minecraft.world.entity.Entity
 import net.minecraft.world.item.ItemStack
 import net.neoforged.bus.api.SubscribeEvent
 import net.neoforged.neoforge.event.entity.item.ItemTossEvent
-import net.neoforged.neoforge.event.entity.living.LivingDamageEvent
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent
 import net.neoforged.neoforge.event.entity.living.LivingDropsEvent
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent
-import net.neoforged.neoforge.event.entity.player.AttackEntityEvent
-import net.neoforged.neoforge.event.entity.player.PlayerEvent
 import net.neoforged.neoforge.event.level.BlockEvent
-import net.neoforged.neoforge.event.tick.PlayerTickEvent
 import net.neoforged.neoforge.event.tick.ServerTickEvent
 
 object GameEvents {
@@ -78,14 +75,20 @@ object GameEvents {
         LobbyManager.playerLevels[source.uuid] = newLevel
         val index = lobby.template.weapons.getOrNull(newLevel)
         if (index == null) {
-            for (player in lobby.players.keys) {
+            if (lobby.state == GameState.PLAYING) {
+                for (player in lobby.players.keys) {
+                    event.isCanceled = true
+                    ScoreboardManager.removeScoreboard(player)
+                    player.connection.send(ClientboundSetTitlesAnimationPacket(10, 60, 20))
+                    player.connection.send(ClientboundSetTitleTextPacket(Component.literal("§6§lИГРА ОКОНЧЕНА")))
+                    player.connection.send(ClientboundSetSubtitleTextPacket(Component.literal("§fПобедил: §a${source.displayName?.string ?: source.name.string}")))
+                }
+                LobbyManager.deleteLobby(lobby.id)}
+            else if (lobby.state == GameState.WAITING) {
                 event.isCanceled = true
-                ScoreboardManager.removeScoreboard(player)
-                player.connection.send(ClientboundSetTitlesAnimationPacket(10, 60, 20))
-                player.connection.send(ClientboundSetTitleTextPacket(Component.literal("§6§lИГРА ОКОНЧЕНА")))
-                player.connection.send(ClientboundSetSubtitleTextPacket(Component.literal("§fПобедил: §a${source.displayName?.string ?: source.name.string}")))
+                source.displayClientMessage(Component.literal("§eЭто было последнее оружие!"), true)
+                source.playNotifySound(SoundEvents.PLAYER_LEVELUP, SoundSource.PLAYERS, 1.0f, 1.0f)
             }
-            LobbyManager.deleteLobby(lobby.id)
         } else {
             source.inventory.setItem(0, ItemStack(getItemFromString(index)))
             source.inventory.selected = 0
@@ -135,18 +138,25 @@ object GameEvents {
 
     @SubscribeEvent
     fun onBlockBreak(event: BlockEvent.BreakEvent) = runIfInGame(event.player) { player, lobby ->
-        if (!lobby.template.allowBlockBreaking == false) event.isCanceled = true
+        if (lobby.template.allowBlockBreaking == false) event.isCanceled = true
     }
 
     @SubscribeEvent
     fun onBlockPlace(event: BlockEvent.EntityPlaceEvent) = runIfInGame(event.entity) { player, lobby ->
-        if (!lobby.template.allowBlockBreaking == false) event.isCanceled = true
+        if (lobby.template.allowBlockBreaking == false) event.isCanceled = true
     }
 
     @SubscribeEvent
     fun onPlayerDamage(event: LivingIncomingDamageEvent) = runIfInGame(event.entity) { player, lobby ->
         val source = event.source as? ServerPlayer ?: return
         if (lobby.players[player] == lobby.players[source]) event.isCanceled = true
+    }
+
+    @SubscribeEvent
+    fun onPlayerLogout(event: PlayerEvent.PlayerLoggedOutEvent) {
+        val player = event.entity as? ServerPlayer ?: return
+        val lobby = LobbyManager.findLobbyByPlayer(player) ?: return
+        LobbyManager.removePlayer(player)
     }
 
     private inline fun runIfInGame(entity: Entity?, action: (ServerPlayer, LobbyInstance) -> Unit) {

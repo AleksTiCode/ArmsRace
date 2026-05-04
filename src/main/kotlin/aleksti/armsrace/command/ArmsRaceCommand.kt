@@ -1,6 +1,7 @@
 ﻿package aleksti.armsrace.command
 
 import aleksti.armsrace.core.LobbyManager
+import aleksti.armsrace.core.ScoreboardManager
 import com.mojang.brigadier.CommandDispatcher
 import com.mojang.brigadier.arguments.IntegerArgumentType
 import com.mojang.brigadier.arguments.StringArgumentType
@@ -8,6 +9,7 @@ import net.minecraft.commands.CommandSourceStack
 import net.minecraft.commands.Commands
 import net.minecraft.commands.SharedSuggestionProvider
 import net.minecraft.network.chat.Component
+import net.minecraft.commands.arguments.EntityArgument
 
 class ArmsRaceCommand {
     fun register(dispatcher: CommandDispatcher<CommandSourceStack>) {
@@ -78,6 +80,45 @@ class ArmsRaceCommand {
                             ctx.source.sendSuccess({ Component.literal(LobbyManager.deleteLobby(IntegerArgumentType.getInteger(ctx, "stop_id")))}, false)
                             1
                         })
+                )
+                .then(Commands.literal("setteam")
+                    .requires { sourceStack -> sourceStack.hasPermission(2) } // Только для админов
+                    .then(Commands.argument("target", EntityArgument.player()) // Аргумент 1: ИГРОК
+                        .then(Commands.argument("team_id", com.mojang.brigadier.arguments.StringArgumentType.word()) // Аргумент 2: КОМАНДА
+                            .executes { ctx ->
+                                // Получаем введенные данные
+                                val targetPlayer = EntityArgument.getPlayer(ctx, "target")
+                                val newTeamId = com.mojang.brigadier.arguments.StringArgumentType.getString(ctx, "team_id")
+
+                                // Ищем лобби этого игрока
+                                val lobby = LobbyManager.findLobbyByPlayer(targetPlayer)
+                                if (lobby == null) {
+                                    ctx.source.sendFailure(Component.literal("Этот игрок не находится в лобби!"))
+                                    return@executes 0
+                                }
+
+                                // Проверяем, существует ли такая команда в шаблоне лобби
+                                val teamExists = lobby.template.teams.any { it.teamId == newTeamId }
+                                if (!teamExists) {
+                                    ctx.source.sendFailure(Component.literal("Команды $newTeamId не существует в этой арене!"))
+                                    return@executes 0
+                                }
+
+                                // --- САМА ЛОГИКА ---
+                                // 1. Меняем команду в мапе
+                                lobby.players[targetPlayer] = newTeamId
+
+                                // 2. Телепортируем на новую базу
+                                lobby.teleportPlayerToSpawn(targetPlayer)
+
+                                // 3. Обновляем скорборд, чтобы цвет ника изменился
+                                ScoreboardManager.updateScoreboard(targetPlayer, lobby)
+
+                                ctx.source.sendSuccess({ Component.literal("§aИгрок ${targetPlayer.name.string} переведен в команду $newTeamId!") }, true)
+                                1
+                            }
+                        )
+                    )
                 )
         )
     }
