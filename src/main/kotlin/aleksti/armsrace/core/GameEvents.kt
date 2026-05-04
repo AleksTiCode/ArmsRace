@@ -82,6 +82,7 @@ object GameEvents {
                     player.connection.send(ClientboundSetTitleTextPacket(Component.literal("§6§lИГРА ОКОНЧЕНА")))
                     player.connection.send(ClientboundSetSubtitleTextPacket(Component.literal("§fПобедил: §a${source.displayName?.string ?: source.name.string}")))
                 }
+                lobby.state = GameState.LOBBY
                 LobbyManager.deleteLobby(lobby.id)}
             else if (lobby.state == GameState.WAITING) {
                 source.displayClientMessage(Component.literal("§eЭто было последнее оружие!"), true)
@@ -149,7 +150,7 @@ object GameEvents {
 
     @SubscribeEvent
     fun onPlayerDamage(event: LivingIncomingDamageEvent) = runIfInGame(event.entity) { player, lobby ->
-        val source = event.source as? ServerPlayer ?: return
+        val source = event.source.entity as? ServerPlayer ?: return
         if (lobby.players[player] == lobby.players[source]) event.isCanceled = true
     }
 

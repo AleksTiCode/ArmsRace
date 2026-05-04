@@ -31,6 +31,7 @@ object LobbyManager {
 
     fun deleteLobby(lobbyID: Int?): String {
         val lobby = activeLobbies[lobbyID] ?: return "Такого лобби нет"
+        lobby.state = GameState.LOBBY
         for (player in lobby.players.keys.toList()) removePlayer(player)
         activeLobbies.remove(lobbyID)
         return "Лобби удалено"
@@ -65,7 +66,6 @@ object LobbyManager {
     fun removePlayer(player: ServerPlayer): String {
         val lobby = findLobbyByPlayer(player) ?: return "Вы не в лобби"
         val spawn = lobby.template.lobbyCoord
-        player.teleportTo(spawn.x, spawn.y, spawn.z)
         player.inventory.clearContent()
         val savedItems = inventories.remove(player.uuid)
         savedItems?.forEachIndexed { index, itemStack ->
@@ -74,7 +74,9 @@ object LobbyManager {
         lobby.players.remove(player)
         playerLevels.remove(player.uuid)
         ScoreboardManager.removeScoreboard(player)
-        lobby.checkWarmup()
+        if (lobby.state != GameState.LOBBY) lobby.checkWarmup()
+        player.teleportTo(spawn.x, spawn.y, spawn.z)
+        player.health = 20f
         return "Вы вышли из игры"
     }
 

@@ -122,6 +122,16 @@ class ArmsRaceCommand {
                         )
                     )
                 )
+                .then(Commands.literal("reload")
+                    .requires { sourceStack -> sourceStack.hasPermission(2) } // Только для админов
+                    .executes { ctx ->
+                        // Вызываем ту самую функцию, которая читает JSON
+                        aleksti.armsrace.core.ConfigManager.loadConfigs()
+
+                        ctx.source.sendSuccess({ net.minecraft.network.chat.Component.literal("§a[ArmsRace] Конфиги успешно перезагружены!") }, true)
+                        1
+                    }
+                )
         )
     }
 }
