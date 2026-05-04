@@ -22,6 +22,7 @@ class LobbyInstance(val id: Int, val template: LobbyTemplate) {
                 val assignedTeamId = availableTeams[index % availableTeams.size]
                 players[player] = assignedTeamId
                 if (gameState == GameState.WAITING) LobbyManager.inventories[player.uuid] = player.inventory.items.map  {it.copy()}
+                if (gameState == GameState.PLAYING) LobbyManager.playerLevels[player.uuid] = 0
                 teleportPlayerToSpawn(player)
                 player.inventory.clearContent()
                 ScoreboardManager.updateScoreboard(player, this)
