@@ -12,10 +12,13 @@ class LobbyInstance(val id: Int, val template: LobbyTemplate) {
     var state = GameState.LOBBY
     var warmupTicks = -1
 
+    private fun success(message: String) = "§a[ArmsRace] $message"
+    private fun error(message: String) = "§c[ArmsRace] $message"
+
     fun start(gameState: GameState): String {
         if (state != GameState.PLAYING && players.isNotEmpty()) {
             val availableTeams = template.teams.map { it.teamId }
-            if (availableTeams.isEmpty()) return "Ошибка: в шаблоне нет команд!"
+            if (availableTeams.isEmpty()) return error("Error: no teams found in template!")
             state = gameState
 
             for ((index, player) in players.keys.toList().withIndex()) {
@@ -28,8 +31,8 @@ class LobbyInstance(val id: Int, val template: LobbyTemplate) {
                 ScoreboardManager.updateScoreboard(player, this)
                 player.inventory.setItem(0, ItemStack(Items.WOODEN_SWORD))
             }
-        } else return "Игроков мало или игра уже идет"
-        return "Игра началась"
+        } else return error("Not enough players or the game is already running")
+        return success("Game started")
     }
 
     // Функция сама узнает команду игрока и телепортирует его куда надо

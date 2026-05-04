@@ -26,7 +26,7 @@ object ConfigManager {
             if (!configFile.exists()) {
 
                 // --- РЕЖИМ СОЗДАТЕЛЯ (Файла нет) ---
-                println("Конфиг не найден. Создаю базовый шаблон...")
+                println("[ArmsRace] Конфиг не найден. Создаю базовый шаблон...")
 
                 // Создаем болванку для примера
                 val defaultTemplate = LobbyTemplate(
@@ -51,7 +51,7 @@ object ConfigManager {
             } else {
 
                 // --- РЕЖИМ ЧИТАТЕЛЯ (Файл уже есть) ---
-                println("Чтение конфига ArmsRace...")
+                println("[ArmsRace] Чтение конфига ArmsRace...")
 
                 // Читаем весь текст из файла
                 val jsonText = configFile.readText()
@@ -59,12 +59,12 @@ object ConfigManager {
                 // МАГИЯ 2: Превращаем текст обратно в объекты Котлина
                 templates = jsonFormat.decodeFromString(jsonText)
 
-                println("Успешно загружено арен: ${templates.size}")
+                println("[ArmsRace] Успешно загружено арен: ${templates.size}")
             }
 
         } catch (e: Exception) {
             // Если админ забыл поставить кавычку в JSON, мы поймаем ошибку здесь!
-            println("КРИТИЧЕСКАЯ ОШИБКА В КОНФИГЕ ARMSRACE: ${e.message}")
+            println("[ArmsRace] КРИТИЧЕСКАЯ ОШИБКА В КОНФИГЕ: ${e.message}")
             // Чтобы мод не сломался полностью, выдадим пустой список
             templates = emptyList()
         }

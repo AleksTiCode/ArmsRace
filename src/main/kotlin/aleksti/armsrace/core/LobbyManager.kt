@@ -13,11 +13,15 @@ object LobbyManager {
     val playerLevels = mutableMapOf<UUID, Int>()
     val inventories = mutableMapOf<UUID, List<ItemStack>>()
 
+    private fun success(message: String) = "§a[ArmsRace] $message"
+    private fun error(message: String) = "§c[ArmsRace] $message"
+    private fun neutral(message: String) = "[ArmsRace] $message"
+
     fun createLobby(template_id: String): String {
         val id = activeLobbies.size + 1
-        val template = ConfigManager.templates.find { it.templateId == template_id } ?: return "Арена не найдена!"
+        val template = ConfigManager.templates.find { it.templateId == template_id } ?: return error("Arena not found!")
         activeLobbies[id] = LobbyInstance(id, template)
-        return "Успешно создано лобби $template_id - $id"
+        return success("Lobby created successfully: $template_id - $id")
     }
 
     fun findLobbyByPlayer(player: ServerPlayer): LobbyInstance? {
@@ -30,16 +34,16 @@ object LobbyManager {
     }
 
     fun deleteLobby(lobbyID: Int?): String {
-        val lobby = activeLobbies[lobbyID] ?: return "Такого лобби нет"
+        val lobby = activeLobbies[lobbyID] ?: return error("Lobby not found")
         lobby.state = GameState.LOBBY
         for (player in lobby.players.keys.toList()) removePlayer(player)
         activeLobbies.remove(lobbyID)
-        return "Лобби удалено"
+        return success("Lobby deleted")
     }
 
     fun addPlayer(player: ServerPlayer, id: Int? = null): String {
         if (findLobbyByPlayer(player) != null) {
-            return "Вы уже в лобби"
+            return error("You are already in a lobby")
         }
         if (id == null) {
             for (lobby in activeLobbies.values) {
@@ -49,22 +53,22 @@ object LobbyManager {
                     playerLevels[player.uuid] = 0
                     lobby.checkWarmup()
                     ScoreboardManager.updateScoreboard(player, lobby)
-                    return "Вы успешно присоединились к лобби ${lobby.id}"
+                    return success("You joined lobby ${lobby.id}")
                 }
             }
-            return "Нет доступного лобби"
+            return error("No available lobby")
         } else {
-            val lobby = activeLobbies[id] ?: return "Лобби не найдено"
+            val lobby = activeLobbies[id] ?: return error("Lobby not found")
             lobby.players[player] = ""
             playerLevels[player.uuid] = 0
             lobby.checkWarmup()
             ScoreboardManager.updateScoreboard(player, lobby)
-            return "Вы успешно присоединились к лобби $id"
+            return success("You joined lobby $id")
         }
     }
 
     fun removePlayer(player: ServerPlayer): String {
-        val lobby = findLobbyByPlayer(player) ?: return "Вы не в лобби"
+        val lobby = findLobbyByPlayer(player) ?: return error("You are not in a lobby")
         val spawn = lobby.template.lobbyCoord
         player.inventory.clearContent()
         val savedItems = inventories.remove(player.uuid)
@@ -77,12 +81,12 @@ object LobbyManager {
         if (lobby.state != GameState.LOBBY) lobby.checkWarmup()
         player.teleportTo(spawn.x, spawn.y, spawn.z)
         player.health = 20f
-        return "Вы вышли из игры"
+        return neutral("You left the game")
     }
 
     fun startCommand(lobbyID: Int?): String {
-        val lobby = activeLobbies[lobbyID] ?: return "Лобби не найдено"
-        if (lobby.state == GameState.PLAYING) return "Игра уже идёт"
+        val lobby = activeLobbies[lobbyID] ?: return error("Lobby not found")
+        if (lobby.state == GameState.PLAYING) return error("Game is already running")
         if (lobby.state == GameState.WAITING) {
             for (player in lobby.players.keys) playerLevels[player.uuid] = 0
             return lobby.start(GameState.PLAYING)
