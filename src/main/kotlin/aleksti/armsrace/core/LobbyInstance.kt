@@ -23,6 +23,7 @@ class LobbyInstance(val id: Int, val template: LobbyTemplate) {
                 if (gameState == GameState.WAITING) LobbyManager.inventories[player.uuid] = player.inventory.items.map  {it.copy()}
                 teleportPlayerToSpawn(player)
                 player.inventory.clearContent()
+                ScoreboardManager.updateScoreboard(player, this)
                 player.inventory.setItem(0, ItemStack(Items.WOODEN_SWORD))
             }
         } else return "Игроков мало или игра уже идет"
