@@ -1,18 +1,25 @@
-## 🚨 Mod in alpha version. If you notice any errors, open issues on GitHub 🚨
-
 # 🔫 Arms Race (Mini-Game Mod)
+**⚠️ EARLY ALPHA / EXPERIMENTAL:** *This mod is currently in early development. Core mechanics work, but full compatibility with other mods is still being tested. Bug reports and feedback are highly appreciated!*
+
 Welcome to **Arms Race** — a fully customizable, server-side friendly mini-game mod for NeoForge!
 
 Bring the classic "Gun Game" experience to your Minecraft server. Players battle each other to upgrade their weapons. The first player to get a kill with the final weapon on the list wins the match!
 
-This mod is an independent core. It doesn't add new weapons by itself, which makes it **100% compatible** with your favorite gun mods like **Timeless and Classics Zero (TaC:Z)**, **Vic's Point Blank**, or even standard Vanilla Minecraft swords and bows!
+This mod is an independent core. It relies on vanilla mechanics, meaning it can technically issue ANY item as a weapon (Vanilla swords, bows, etc.).
 
-### ✨ Features
-*   **Fully Customizable Arenas:** Create multiple arenas via a simple JSON config.
+### ✨ Current Features
+*   **Customizable Arenas:** Create multiple arenas via a simple JSON config.
 *   **Team Support:** Set up Free-For-All or Team Deathmatch modes.
-*   **Custom Weapon Ladders:** Define your own weapon progression list using item IDs (e.g., `minecraft:iron_sword` or `tacz:ak47`).
+*   **Custom Weapon & Armor Ladders:** Define your own progression list using item IDs. You can configure automatic armor equipping and extra items (like ammo or shields) for each level!
 *   **Dynamic UI:** Built-in clean Scoreboard to track kills, lobby status, and warmup timers.
 *   **Safe Environment:** Configurable block-breaking protection and spawn point management.
+
+### 🚀 Roadmap / Planned Features
+Since the mod is in its early stages, here is what is planned for the future updates:
+*   **🔫 Weapon Mods Compatibility:** Thorough testing and guaranteed support for heavy gun mods like **Timeless and Classics Zero (TaC:Z)** and **Vic's Point Blank**.
+*   **🌐 Cross-Loader Support:** Porting the mod to **Fabric** (potentially using Architectury API) and updating to other Minecraft versions.
+*   **🔌 Plugin Compatibility:** Ensuring seamless work with popular server plugins (e.g., LuckPerms, economy, and anti-cheats).
+*   **🏆 End-Game Polish:** Fancy victory screens, post-match statistics, and rewards.
 
 ### 📜 Commands (Requires OP / Permission Level 2 for setup)
 *   `/armsrace create <template_id>` - Creates a lobby based on the config template.
@@ -23,49 +30,60 @@ This mod is an independent core. It doesn't add new weapons by itself, which mak
 *   `/armsrace reload` - Reloads the JSON config without restarting the server!
 
 ### 🛠️ Configuration Guide
-When you run the mod for the first time, it will generate a default configuration file located at `config/armsrace_arenas.json`.
+When you run the mod for the first time, it will generate an advanced default configuration file located at `config/armsrace_arenas.json`.
 
-You can add as many arena templates as you want! Here is a breakdown of the structure:
+The config allows deep customization of weapons, team spawns, armor progression, and even specific inventory slots!
 
+**Example Configuration:**
 ```json[
-  {
-    "template_id": "dust2_arena",
-    "displayName": "Dust 2 - Deathmatch",
-    "teams":[
-      {
-        "teamId": "red",
-        "colorCode": "§c",
-        "spawns":[
-          { "x": 10.5, "y": 65.0, "z": 20.5 },
-          { "x": 12.0, "y": 65.0, "z": 22.0 }
+    {
+        "templateId": "vanilla",
+        "lobbyCoord": { "x": 137.0, "y": -54.0, "z": 0.0 },
+        "maxPlayers": 10,
+        "warmupTime": 60,
+        "teams":[
+            {
+                "teamId": "1",
+                "colorCode": "§b",
+                "spawns":[ { "x": 143.0, "y": -57.0, "z": 28.0 } ]
+            },
+            {
+                "teamId": "2",
+                "colorCode": "§a",
+                "spawns":[ { "x": 80.0, "y": -60.0, "z": 8.0 } ]
+            }
+        ],
+        "weapons":[
+            {
+                "item": "minecraft:wooden_sword"
+            },
+            {
+                "item": "minecraft:iron_sword",
+                "additionalItems":[
+                    { "item": "minecraft:grass_block", "count": 3, "slot": 2 }
+                ]
+            },
+            {
+                "item": "minecraft:diamond_sword"
+            }
+        ],
+        "armor":[
+            { "helmet": "minecraft:iron_helmet", "level": 0 },
+            { "chestplate": "minecraft:iron_chestplate", "level": 1 }
+        ],
+        "additionalItems":[
+            { "item": "minecraft:cobblestone", "count": 54, "slot": 7 }
         ]
-      },
-      {
-        "teamId": "blue",
-        "colorCode": "§9",
-        "spawns":[
-          { "x": -10.5, "y": 65.0, "z": -20.5 },
-          { "x": -12.0, "y": 65.0, "z": -22.0 }
-        ]
-      }
-    ],
-    "weapons":[
-      "minecraft:wooden_sword",
-      "minecraft:iron_sword",
-      "minecraft:diamond_sword",
-      "minecraft:golden_sword"
-    ],
-    "minPlayers": 2,
-    "maxPlayers": 10,
-    "warmupTimeSeconds": 15,
-    "allowBlockBreaking": false
-  }
+    }
 ]
 ```
 
-#### Parameters Explained:
-*  `template_id` - The system name used in the /armsrace create command.
-*  `displayName` - The title displayed on the players' Scoreboard.
-*  `colorCode` - Minecraft formatting code (e.g., §c for Red) to color player names on the scoreboard.
-*  `weapons` - The progression list. Players upgrade to the next item upon getting a kill. The last item is the winning weapon!
-*  `allowBlockBreaking` - If false, protects your arena from griefing during the match.
+#### Advanced Parameters Explained:
+
+`lobbyCoord` - The waiting area where players spawn before the match starts or after they leave.
+
+`weapons` - The progression ladder. You can now define additionalItems for specific weapon levels (e.g., giving 30 rounds of ammo only when a player reaches the AK-47 level!).
+
+`armor` - Equip players with specific armor pieces at specific levels.
+
+`additionalItems` (Global) - Items given to all players at the start of the match and on every respawn (like building blocks or food). Define the count and the exact inventory slot.
