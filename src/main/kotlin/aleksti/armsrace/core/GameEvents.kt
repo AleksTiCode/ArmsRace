@@ -20,52 +20,12 @@ import net.neoforged.neoforge.event.tick.ServerTickEvent
 object GameEvents {
 
     @SubscribeEvent
-//    fun onEntityDeath(event: LivingDeathEvent) {
-//        val entity = event.entity ?: return
-//        val source = event.source.entity ?: return // as? ServerPlayer ?: return
-//        if (source is ServerPlayer) {
-//            val lobby = LobbyManager.findLobbyByPlayer(source) ?: return
-//            val level = LobbyManager.playerLevels[source.uuid] ?: return
-////            val spawn = lobby.template.spawns.random()
-////            val level2 = LobbyManager.playerLevels[entity.uuid] ?: return
-//            if (lobby.state == GameState.LOBBY) return
-//            val newLevel = level + 1
-//            LobbyManager.playerLevels[source.uuid] = newLevel
-//            val index = lobby.template.weapons.getOrNull(newLevel)
-//            if (index == null) {
-//                for (player in lobby.players.keys) {
-//                    ScoreboardManager.removeScoreboard(player)
-//                    player.connection.send(ClientboundSetTitlesAnimationPacket(10, 60, 20))
-//                    player.connection.send(ClientboundSetTitleTextPacket(Component.literal("§6§lИГРА ОКОНЧЕНА")))
-//                    player.connection.send(ClientboundSetSubtitleTextPacket(Component.literal("§fПобедил: §a${source.displayName?.string ?: source.name.string}")))
-//                }
-//                LobbyManager.deleteLobby(lobby.id)
-//            } else {
-//                source.inventory.setItem(0, ItemStack(getItemFromString(index)))
-//                source.inventory.selected = 0
-//                source.displayClientMessage(Component.literal("§eОружие: ${newLevel}/${lobby.template.weapons.size}"), true)
-//                source.playNotifySound(SoundEvents.PLAYER_LEVELUP, SoundSource.PLAYERS, 1.0f, 1.0f)
-//                for (player in lobby.players.keys) ScoreboardManager.updateScoreboard(player, lobby)
-//            }
-//        }
-//        if (entity is ServerPlayer) {
-//            val lobby = LobbyManager.findLobbyByPlayer(entity) ?: return
-//            if (lobby.state == GameState.LOBBY) return
-//            if (lobby.template.instantRespawn == false) return
-////            val spawn = lobby.template.spawns.random()
-//            event.isCanceled = true
-//            lobby.teleportPlayerToSpawn(entity)
-////            entity.health = 20f
-////            entity.teleportTo(spawn.x, spawn.y, spawn.z)
-//        }
-//
-//    }
-
     fun onEntityDeath(event: LivingDeathEvent) {
         val entity = event.entity as? ServerPlayer ?: return
         val source = event.source.entity as? ServerPlayer ?: return // as? ServerPlayer ?: return
         val lobby = LobbyManager.findLobbyByPlayer(source) ?: return
         val lobby2 = LobbyManager.findLobbyByPlayer(entity) ?: return
+        if (lobby != lobby2) return
         val level = LobbyManager.playerLevels[source.uuid] ?: return
         if (lobby.state == GameState.LOBBY) return
         val newLevel = level + 1
@@ -80,9 +40,9 @@ object GameEvents {
                     player.connection.send(ClientboundSetTitleTextPacket(Component.literal("§6§lИГРА ОКОНЧЕНА")))
                     player.connection.send(ClientboundSetSubtitleTextPacket(Component.literal("§fПобедил: §a${source.displayName?.string ?: source.name.string}")))
                 }
-                lobby.state = GameState.LOBBY
-                LobbyManager.deleteLobby(lobby.id)}
-            else if (lobby.state == GameState.WAITING) {
+                lobby.state = GameState.FINISHED
+                lobby.warmupTicks = 100 // 5 секунд = 5 * 20 тиков
+            } else if (lobby.state == GameState.WAITING) {
                 source.displayClientMessage(Component.literal("§eЭто было последнее оружие!"), true)
                 source.playNotifySound(SoundEvents.PLAYER_LEVELUP, SoundSource.PLAYERS, 1.0f, 1.0f)
                 if (lobby2.template.instantRespawn == false) return
@@ -108,13 +68,14 @@ object GameEvents {
     }
 
     @SubscribeEvent
-    fun onPlayerTick(event: ServerTickEvent.Post) {
+    fun onServerTick(event: ServerTickEvent.Post) {
         for (lobby in LobbyManager.activeLobbies.values) {
+            lobby.tick()
+
             if (lobby.state != GameState.LOBBY) {
                 for (player in lobby.players.keys) {
-                    val food = player.foodData
-                    food.foodLevel = 20
-                    food.setSaturation(5.0f)
+                    player.foodData.foodLevel = 20
+                    player.foodData.setSaturation(5.0f)
                 }
             }
         }
@@ -131,18 +92,18 @@ object GameEvents {
     }
 
     @SubscribeEvent
-    fun onServerTick(event: ServerTickEvent.Post) {
-        for (lobby in LobbyManager.activeLobbies.values) lobby.tick()
-    }
-
-    @SubscribeEvent
     fun onBlockBreak(event: PlayerInteractEvent.LeftClickBlock) = runIfInGame(event.entity) { player, lobby ->
         if (lobby.template.allowBlockBreaking == false) event.isCanceled = true
     }
 
     @SubscribeEvent
     fun onBlockPlace(event: PlayerInteractEvent.RightClickBlock) = runIfInGame(event.entity) { player, lobby ->
-        if (lobby.template.allowBlockBreaking == false) event.isCanceled = true
+        if (lobby.template.allowBlockBreaking == false) {
+            event.isCanceled = true
+            event.cancellationResult = net.minecraft.world.InteractionResult.FAIL
+            // Принудительно обновляем инвентарь клиента, чтобы "исчезнувший" блок вернулся
+            player.inventoryMenu.sendAllDataToRemote()
+        }
     }
 
     @SubscribeEvent

@@ -4,7 +4,8 @@ import kotlinx.serialization.Serializable
 enum class GameState {
     WAITING,
     PLAYING,
-    LOBBY
+    LOBBY,
+    FINISHED
 }
 
 @Serializable

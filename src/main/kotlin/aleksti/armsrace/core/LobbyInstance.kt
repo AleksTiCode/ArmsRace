@@ -76,7 +76,8 @@ class LobbyInstance(val id: Int, val template: LobbyTemplate) {
     }
 
     fun tick() {
-        if (state != GameState.WAITING || warmupTicks < 0) return
+        // Разрешаем тикать и в WAITING, и в FINISHED
+        if ((state != GameState.WAITING && state != GameState.FINISHED) || warmupTicks < 0) return
 
         warmupTicks-- // Отнимаем 1 тик
 
@@ -88,7 +89,11 @@ class LobbyInstance(val id: Int, val template: LobbyTemplate) {
 
         // Если время вышло - стартуем!
         if (warmupTicks == 0) {
-            start(GameState.PLAYING)
+            if (state == GameState.FINISHED) {
+                LobbyManager.deleteLobby(id)
+            } else {
+                start(GameState.PLAYING)
+            }
         }
 
         // (Для красоты) Если число делится на 20 без остатка (прошла ровно 1 секунда)
