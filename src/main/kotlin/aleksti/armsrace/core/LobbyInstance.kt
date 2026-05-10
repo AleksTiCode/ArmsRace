@@ -1,11 +1,13 @@
 ﻿package aleksti.armsrace.core
 
+import aleksti.armsrace.core.LobbyManager
+import aleksti.armsrace.core.LobbyManager.getItemFromString
 import net.minecraft.network.chat.Component
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.effect.MobEffectInstance
 import net.minecraft.world.effect.MobEffects
+import net.minecraft.world.entity.EquipmentSlot
 import net.minecraft.world.item.ItemStack
-import net.minecraft.world.item.Items
 
 class LobbyInstance(val id: Int, val template: LobbyTemplate) {
     val players = mutableMapOf<ServerPlayer, String>()
@@ -29,7 +31,8 @@ class LobbyInstance(val id: Int, val template: LobbyTemplate) {
                 teleportPlayerToSpawn(player)
                 player.inventory.clearContent()
                 ScoreboardManager.updateScoreboard(player, this)
-                player.inventory.setItem(0, ItemStack(Items.WOODEN_SWORD))
+                given(0, player)
+                for (i in template.additionalItems) player.inventory.setItem(i.slot, ItemStack(LobbyManager.getItemFromString(i.item), i.count))
             }
         } else return error("Not enough players or the game is already running")
         return success("Game started")
@@ -47,7 +50,7 @@ class LobbyInstance(val id: Int, val template: LobbyTemplate) {
         if (teamData.spawns.isNotEmpty()) {
             val spawn = teamData.spawns.random()
             player.health = 20f
-            player.inventory.selected = 0
+            if (template.instantRespawn == false) given(LobbyManager.playerLevels[player.uuid] ?: 0, player)
             player.teleportTo(spawn.x, spawn.y, spawn.z)
             player.addEffect(MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 60, 255, false, false))
         }
@@ -90,5 +93,30 @@ class LobbyInstance(val id: Int, val template: LobbyTemplate) {
 
         // (Для красоты) Если число делится на 20 без остатка (прошла ровно 1 секунда)
         // можно выводить сообщение в ActionBar или чат, если осталось 5, 4, 3...
+    }
+    
+    fun given(level: Int, player: ServerPlayer) {
+        player.inventory.selected = 0
+        player.setItemSlot(EquipmentSlot.MAINHAND, ItemStack(getItemFromString(template.weapons[level].item)))
+        
+        val armorData = template.armor.getOrNull(level)
+        if (armorData != null) {
+            val armorMap = mapOf(
+                EquipmentSlot.HEAD to armorData.helmet,
+                EquipmentSlot.CHEST to armorData.chestplate,
+                EquipmentSlot.LEGS to armorData.leggings,
+                EquipmentSlot.FEET to armorData.boots,
+                EquipmentSlot.OFFHAND to armorData.shield
+            )
+            
+            for ((slot, itemString) in armorMap) {
+                if (itemString != null) {
+                    player.setItemSlot(slot, ItemStack(getItemFromString(itemString)))
+                } else if (armorData.replacePreviousOnEmpty) {
+                    player.setItemSlot(slot, ItemStack.EMPTY)
+                }
+            }
+        }
+        for (i in template.weapons[level].additionalItems) player.inventory.setItem(i.slot, ItemStack(getItemFromString(i.item), i.count))
     }
 }

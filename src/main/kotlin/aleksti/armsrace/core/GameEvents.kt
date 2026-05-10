@@ -1,6 +1,5 @@
 package aleksti.armsrace.core
 
-import aleksti.armsrace.core.LobbyManager.getItemFromString
 import net.minecraft.network.chat.Component
 import net.neoforged.neoforge.event.entity.player.PlayerEvent
 import net.minecraft.network.protocol.game.ClientboundSetSubtitleTextPacket
@@ -10,13 +9,12 @@ import net.minecraft.server.level.ServerPlayer
 import net.minecraft.sounds.SoundEvents
 import net.minecraft.sounds.SoundSource
 import net.minecraft.world.entity.Entity
-import net.minecraft.world.item.ItemStack
 import net.neoforged.bus.api.SubscribeEvent
 import net.neoforged.neoforge.event.entity.item.ItemTossEvent
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent
 import net.neoforged.neoforge.event.entity.living.LivingDropsEvent
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent
-import net.neoforged.neoforge.event.level.BlockEvent
+import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent
 import net.neoforged.neoforge.event.tick.ServerTickEvent
 
 object GameEvents {
@@ -72,7 +70,7 @@ object GameEvents {
         if (lobby.state == GameState.LOBBY) return
         val newLevel = level + 1
         LobbyManager.playerLevels[source.uuid] = newLevel
-        val index = lobby.template.weapons.getOrNull(newLevel)
+        val index = lobby.template.weapons.getOrNull(newLevel)?.item
         if (index == null) {
             event.isCanceled = true
             if (lobby.state == GameState.PLAYING) {
@@ -93,8 +91,7 @@ object GameEvents {
 
 
         } else {
-            source.inventory.setItem(0, ItemStack(getItemFromString(index)))
-            source.inventory.selected = 0
+            lobby.given(newLevel, source)
             source.displayClientMessage(Component.literal("§eОружие: ${newLevel}/${lobby.template.weapons.size}"), true)
             source.playNotifySound(SoundEvents.PLAYER_LEVELUP, SoundSource.PLAYERS, 1.0f, 1.0f)
             for (player in lobby.players.keys) ScoreboardManager.updateScoreboard(player, lobby)
@@ -139,12 +136,12 @@ object GameEvents {
     }
 
     @SubscribeEvent
-    fun onBlockBreak(event: BlockEvent.BreakEvent) = runIfInGame(event.player) { player, lobby ->
+    fun onBlockBreak(event: PlayerInteractEvent.LeftClickBlock) = runIfInGame(event.entity) { player, lobby ->
         if (lobby.template.allowBlockBreaking == false) event.isCanceled = true
     }
 
     @SubscribeEvent
-    fun onBlockPlace(event: BlockEvent.EntityPlaceEvent) = runIfInGame(event.entity) { player, lobby ->
+    fun onBlockPlace(event: PlayerInteractEvent.RightClickBlock) = runIfInGame(event.entity) { player, lobby ->
         if (lobby.template.allowBlockBreaking == false) event.isCanceled = true
     }
 

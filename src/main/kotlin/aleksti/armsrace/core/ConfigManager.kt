@@ -32,7 +32,10 @@ object ConfigManager {
                 val defaultTemplate = LobbyTemplate(
                     templateId = "vanilla",
                     teams = listOf(TeamTemplate("1", "§b",listOf(SpawnPoint(143.0, -57.0, 28.0))), TeamTemplate("2", "§a",listOf(SpawnPoint(80.0, -60.0, 8.0)))),
-                    weapons = listOf("minecraft:wooden_sword", "minecraft:iron_sword", "minecraft:diamond_sword"),
+                    weapons = listOf(Weapon("minecraft:wooden_sword"), Weapon("minecraft:iron_sword", listOf(Item("minecraft:grass_block", 3, 2))),
+                        Weapon("minecraft:diamond_sword")),
+                    additionalItems = listOf(Item("minecraft:cobblestone", 54, 7)),
+                    armor = listOf(Armor(helmet = "minecraft:iron_helmet", level = 0), Armor(chestplate = "minecraft:iron_chestplate", level = 1)),
                     maxPlayers = 10,
                     warmupTime = 60,
                     lobbyCoord = SpawnPoint(137.0, -54.0, 0.0),

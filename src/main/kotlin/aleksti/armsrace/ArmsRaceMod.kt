@@ -9,6 +9,7 @@ import net.neoforged.fml.common.Mod
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent
 import net.neoforged.neoforge.common.NeoForge
 import net.neoforged.neoforge.event.RegisterCommandsEvent
+import net.neoforged.neoforge.event.server.ServerStartingEvent
 
 const val ID = "armsrace"
 @Mod(ID)
@@ -22,7 +23,13 @@ class ArmsRaceMod(modEventBus: IEventBus) {
 
     fun onCommonSetup(event: FMLCommonSetupEvent) {
         ConfigManager.loadConfigs()
-        println("Common setup")
+        println("[ArmsRace] Configs loaded")
+    }
+
+    @SubscribeEvent
+    fun onServerStarting(event: ServerStartingEvent) {
+        ConfigManager.loadConfigs()
+        println("[ArmsRace] Configs loaded")
     }
 
     @SubscribeEvent

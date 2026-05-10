@@ -93,7 +93,7 @@ object LobbyManager {
         } else return lobby.start(GameState.WAITING)
     }
 
-    fun getItemFromString(id: String): Item {
+    fun getItemFromString(id: String?): Item {
         val location = ResourceLocation.parse(id)
         // Если игра не найдет такой предмет, выдадим деревянный меч, чтобы игра не крашнулась
         return BuiltInRegistries.ITEM.getOptional(location).orElse(Items.AIR)
